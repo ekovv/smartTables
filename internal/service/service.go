@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
+	"log"
 	"smartTables/config"
 	"smartTables/internal/domains"
 	"smartTables/internal/shema"
@@ -38,4 +40,12 @@ func (s *Service) GetConnection(cook, user, password, connect string) {
 	conn.Password = password
 	conn.ConnectionDB = connect
 	s.connections[cook] = conn
+}
+
+func (s *Service) Registration(user, password string) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }

@@ -67,8 +67,8 @@ func (s *Handler) LoginPost(c *gin.Context) {
 
 }
 
-func (s *Handler) LoginGet(c *gin.Context) {
-
+func (s *Handler) Login(c *gin.Context) {
+	c.HTML(http.StatusOK, "login.heml", nil)
 }
 
 func (s *Handler) RegistrationPost(c *gin.Context) {
@@ -76,5 +76,5 @@ func (s *Handler) RegistrationPost(c *gin.Context) {
 }
 
 func (s *Handler) Registration(c *gin.Context) {
-
+	c.HTML(http.StatusOK, "registration.html", nil)
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Форма Регистрации</title>
+    <title>Форма Входа</title>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <style>
         body, html {
@@ -16,7 +16,7 @@
             text-align: center;
             font-size: 48px;
             color: #333;
-            margin-top: 40px;
+            margin-top: 40px; /* Отступ сверху */
         }
         .form-container {
             position: absolute;
@@ -57,7 +57,7 @@
             margin-bottom: 10px;
             font-size: 0.875em;
         }
-        .signup-header {
+        .signin-header {
             text-align: center;
             margin-bottom: 20px;
             font-size: 24px;
@@ -70,22 +70,18 @@
 <div class="brand-title">Smart Tables</div>
 
 <div class="form-container">
-    <div class="signup-header">Sign up</div>
+    <div class="signin-header">Welcome back!</div>
     <form>
         <div class="mb-3">
             <label for="login" class="form-label">Username or Email</label>
-            <input type="text" name="login" class="form-control" id="login" aria-describedby="loginHelp">
-            <div id="loginHelp" class="form-text">Choose a unique username.</div>
+            <input type="text" class="form-control" name="login" id="login" aria-describedby="loginHelp">
+            <div id="loginHelp" class="form-text">Enter your username or email address.</div>
         </div>
         <div class="mb-3">
-            <label for="exampleInputPassword1" class="form-label">Password</label>
-            <input type="password" name="password" class="form-control" id="exampleInputPassword1">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" id="password">
         </div>
-        <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="exampleCheck1">
-            <label class="form-check-label" for="exampleCheck1">Check me out</label>
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary">Sign in</button>
     </form>
 </div>
 

@@ -98,3 +98,7 @@ func (s *Storage) ExecWithRes(ctx context.Context, query string) ([][]interface{
 	}
 	return result, nil
 }
+
+func (s *Storage) Registration(ctx context.Context, user, password string) error {
+
+}
