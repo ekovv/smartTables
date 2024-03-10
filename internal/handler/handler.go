@@ -45,8 +45,6 @@ func (s *Handler) PostHome(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err)
 		return
 	}
-
-	// Преобразование res в [][]string
 	data := make([][]string, len(res))
 	for i, row := range res {
 		data[i] = make([]string, len(row))
