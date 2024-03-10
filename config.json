@@ -1,0 +1,5 @@
+{
+  "host": "localhost:8080",
+  "dsn": "postgres://name:password@localhost:5432/table?sslmode=disable",
+  "salt": "ssssaaallt"
+}
