@@ -68,11 +68,19 @@ func (s *Storage) ExecWithRes(ctx context.Context, query string) ([][]interface{
 		return nil, err
 	}
 	defer rows.Close()
-	var result [][]interface{}
+
 	cols, err := rows.Columns()
 	if err != nil {
 		return nil, err
 	}
+
+	// Преобразование названий колонок в []interface{} и добавление их в результат
+	colNames := make([]interface{}, len(cols))
+	for i, v := range cols {
+		colNames[i] = v
+	}
+	result := [][]interface{}{colNames}
+
 	for rows.Next() {
 		columns := make([]interface{}, len(cols))
 		columnPointers := make([]interface{}, len(cols))
@@ -89,5 +97,4 @@ func (s *Storage) ExecWithRes(ctx context.Context, query string) ([][]interface{
 		return nil, err
 	}
 	return result, nil
-
 }
