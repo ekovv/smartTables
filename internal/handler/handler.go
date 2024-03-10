@@ -62,3 +62,19 @@ func (s *Handler) GetResult(c *gin.Context) {
 	c.HTML(http.StatusOK, "result.html", nil)
 
 }
+
+func (s *Handler) LoginPost(c *gin.Context) {
+
+}
+
+func (s *Handler) LoginGet(c *gin.Context) {
+
+}
+
+func (s *Handler) RegistrationPost(c *gin.Context) {
+
+}
+
+func (s *Handler) Registration(c *gin.Context) {
+
+}
