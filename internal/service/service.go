@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"smartTables/config"
 	"smartTables/internal/domains"
 	"smartTables/internal/shema"
+	"strings"
 )
 
 type Service struct {
@@ -42,10 +44,19 @@ func (s *Service) GetConnection(cook, user, password, connect string) {
 	s.connections[cook] = conn
 }
 
-func (s *Service) Registration(user, password string) error {
+func (s *Service) Registration(ctx context.Context, user, password string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = s.storage.Registration(ctx, user, hashedPassword)
+	if err != nil {
+		if strings.Contains(err.Error(), "unique constraint") {
+			return fmt.Errorf("login already exists")
+		} else {
+			return fmt.Errorf("not saved")
+		}
+	}
+	return nil
 
 }

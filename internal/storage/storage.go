@@ -9,6 +9,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 	"smartTables/config"
+	"strings"
 )
 
 type Storage struct {
@@ -99,6 +100,14 @@ func (s *Storage) ExecWithRes(ctx context.Context, query string) ([][]interface{
 	return result, nil
 }
 
-func (s *Storage) Registration(ctx context.Context, user, password string) error {
-
+func (s *Storage) Registration(ctx context.Context, user string, password []byte) error {
+	_, err := s.conn.ExecContext(ctx, "INSERT INTO users (login, password) VALUES ($1, $2)", user, password)
+	if err != nil {
+		if strings.Contains(err.Error(), "unique constraint") {
+			return fmt.Errorf("unique constraint")
+		} else {
+			return fmt.Errorf("not saved in database: %w", err)
+		}
+	}
+	return nil
 }

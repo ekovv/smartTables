@@ -4,4 +4,5 @@ import "context"
 
 type Storage interface {
 	ExecWithRes(ctx context.Context, query string) ([][]interface{}, error)
+	Registration(ctx context.Context, user string, password []byte) error
 }

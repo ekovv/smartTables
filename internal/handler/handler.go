@@ -42,7 +42,7 @@ func (s *Handler) PostHome(c *gin.Context) {
 	ctx := c.Request.Context()
 	res, err := s.service.ExecQuery(ctx, c.PostForm("query"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err)
+		HandlerErr(c, err)
 		return
 	}
 	data := make([][]string, len(res))
@@ -68,11 +68,16 @@ func (s *Handler) LoginPost(c *gin.Context) {
 }
 
 func (s *Handler) Login(c *gin.Context) {
-	c.HTML(http.StatusOK, "login.heml", nil)
+	c.HTML(http.StatusOK, "login.html", nil)
 }
 
 func (s *Handler) RegistrationPost(c *gin.Context) {
-
+	ctx := c.Request.Context()
+	err := s.service.Registration(ctx, c.PostForm("login"), c.PostForm("password"))
+	if err != nil {
+		HandlerErr(c, err)
+		return
+	}
 }
 
 func (s *Handler) Registration(c *gin.Context) {
