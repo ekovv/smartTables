@@ -55,7 +55,7 @@ func (s *Storage) Close() error {
 	return s.conn.Close()
 }
 
-func (s *Storage) ExecWithRes(ctx context.Context, query string) ([][]interface{}, error) {
+func (s *Storage) ExecWithRes(ctx context.Context, query string, user, password, connectionString string) ([][]interface{}, error) {
 	db, err := sql.Open("postgres", "postgres://dmitrydenisov:ekov16@localhost:5432/smartTables?sslmode=disable")
 	if err != nil {
 		return nil, err
