@@ -28,7 +28,7 @@ func NewPostgresDBStorage(config config.Config) (*Storage, error) {
 	}
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://migrations",
-		"ewallet", driver)
+		"smartTables", driver)
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate: %w", err)
 	}
@@ -55,8 +55,8 @@ func (s *Storage) Close() error {
 	return s.conn.Close()
 }
 
-func (s *Storage) ExecWithRes(ctx context.Context, query string, user, password, connectionString string) ([][]interface{}, error) {
-	db, err := sql.Open("postgres", "postgres://dmitrydenisov:ekov16@localhost:5432/smartTables?sslmode=disable")
+func (s *Storage) ExecWithRes(ctx context.Context, query string, connectionString string) ([][]interface{}, error) {
+	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,6 @@ func (s *Storage) ExecWithRes(ctx context.Context, query string, user, password,
 		return nil, err
 	}
 
-	// Преобразование названий колонок в []interface{} и добавление их в результат
 	colNames := make([]interface{}, len(cols))
 	for i, v := range cols {
 		colNames[i] = v

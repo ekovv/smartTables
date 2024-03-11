@@ -81,7 +81,7 @@
 
 <div class="form-container">
     <div class="signin-header">Welcome back!</div>
-    <form>
+    <form action="/" method="POST">
         <div class="mb-3">
             <label for="database" class="form-label">Select Database:</label>
             <select id="database" name="database" class="form-control database-select">
@@ -89,17 +89,9 @@
             </select>
         </div>
         <div class="mb-3">
-            <label for="user" class="form-label">User</label>
-            <input type="text" class="form-control" name="user" id="user" aria-describedby="userHelp">
-            <div id="userHelp" class="form-text">Enter your username.</div>
-        </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" name="password" class="form-control" id="password">
-        </div>
-        <div class="mb-3">
             <label for="connectionString" class="form-label">Connection String</label>
-            <input type="text" name="connectionString" class="form-control" id="connectionString">
+            <input type="text" name="connectionString" class="form-control" id="connectionString" aria-describedby="connectionStringHelp">
+            <div id="connectionStringHelp" class="form-text">Enter your connection string to database</div>
         </div>
         <button type="submit" class="btn btn-primary">Connect</button>
     </form>

@@ -71,7 +71,7 @@
 
 <div class="form-container">
     <div class="signin-header">Sign in</div>
-    <form>
+    <form action="/login" method="POST">
         <div class="mb-3">
             <label for="login" class="form-label">Username or Email</label>
             <input type="text" class="form-control" name="login" id="login" aria-describedby="loginHelp">
@@ -82,6 +82,10 @@
             <input type="password" name="password" class="form-control" id="password">
         </div>
         <button type="submit" class="btn btn-primary">Sign in</button>
+    </form>
+    <p style="text-align: center; margin-top: 20px;">If you are not registered, click here:</p>
+    <form action="/registration" method="GET" style="margin-top: 10px;">
+        <button type="submit" class="btn btn-primary" style="background-color: #4CAF50;">Register</button>
     </form>
 </div>
 

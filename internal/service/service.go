@@ -9,7 +9,6 @@ import (
 	"smartTables/config"
 	"smartTables/internal/constants"
 	"smartTables/internal/domains"
-	"smartTables/internal/shema"
 	"strings"
 )
 
@@ -17,7 +16,7 @@ type Service struct {
 	storage     domains.Storage
 	config      config.Config
 	logger      *zap.Logger
-	connections map[string]shema.Connections
+	connections map[string]string
 }
 
 func NewService(storage domains.Storage, config config.Config) *Service {
@@ -25,11 +24,15 @@ func NewService(storage domains.Storage, config config.Config) *Service {
 	if err != nil {
 		return nil
 	}
-	return &Service{storage: storage, logger: logger, config: config, connections: make(map[string]shema.Connections)}
+	return &Service{storage: storage, logger: logger, config: config, connections: make(map[string]string)}
 }
 
-func (s *Service) ExecQuery(ctx context.Context, query string) ([][]interface{}, error) {
-	res, err := s.storage.ExecWithRes(ctx, query)
+func (s *Service) ExecQuery(ctx context.Context, query string, user string) ([][]interface{}, error) {
+	connectionString, ok := s.connections[user]
+	if !ok {
+		return nil, fmt.Errorf("no connections")
+	}
+	res, err := s.storage.ExecWithRes(ctx, query, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -37,12 +40,8 @@ func (s *Service) ExecQuery(ctx context.Context, query string) ([][]interface{},
 
 }
 
-func (s *Service) GetConnection(cook, user, password, connect string) {
-	conn := shema.Connections{}
-	conn.Login = user
-	conn.Password = password
-	conn.ConnectionDB = connect
-	s.connections[cook] = conn
+func (s *Service) GetConnection(user, connect string) {
+	s.connections[user] = connect
 }
 
 func (s *Service) Registration(ctx context.Context, user, password string) error {
@@ -53,7 +52,7 @@ func (s *Service) Registration(ctx context.Context, user, password string) error
 	err = s.storage.Registration(ctx, user, hashedPassword)
 	if err != nil {
 		if strings.Contains(err.Error(), "unique constraint") {
-			return fmt.Errorf("login already exists")
+			return constants.ErrAlreadyExists
 		} else {
 			return fmt.Errorf("not saved")
 		}
@@ -68,7 +67,7 @@ func (s *Service) Login(ctx context.Context, user, password string) error {
 		if strings.Contains(err.Error(), "user not registered") {
 			return constants.ErrInvalidData
 		} else {
-			return fmt.Errorf("not checked")
+			return constants.ErrInvalidData
 		}
 	}
 	err = bcrypt.CompareHashAndPassword(pass, []byte(password))

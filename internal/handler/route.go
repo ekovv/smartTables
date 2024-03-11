@@ -8,4 +8,8 @@ func Route(c *gin.Engine, h *Handler) {
 	c.GET("/result", h.GetResult)
 	c.GET("/", h.ConnectionGet)
 	c.POST("/", h.ConnectionPost)
+	c.GET("/registration", h.Registration)
+	c.POST("/registration", h.RegistrationPost)
+	c.GET("/login", h.Login)
+	c.POST("/login", h.LoginPost)
 }
