@@ -32,6 +32,7 @@ func (s *Service) ExecQuery(ctx context.Context, query string, user string) ([][
 	if !ok {
 		return nil, fmt.Errorf("no connections")
 	}
+
 	res, err := s.storage.ExecWithRes(ctx, query, connectionString)
 	if err != nil {
 		return nil, err
