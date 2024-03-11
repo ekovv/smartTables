@@ -25,6 +25,7 @@ func NewHandler(service domains.Service, cnf config.Config) *Handler {
 		engine:  router,
 		config:  cnf,
 	}
+
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
 	if err != nil {
@@ -33,6 +34,7 @@ func NewHandler(service domains.Service, cnf config.Config) *Handler {
 	}
 	store := cookie.NewStore(key)
 	router.Use(sessions.Sessions("token", store))
+
 	Route(router, h)
 	return h
 }
@@ -50,6 +52,7 @@ func (s *Handler) GetHome(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
+
 	c.HTML(http.StatusOK, "smartTables.html", nil)
 }
 
@@ -60,6 +63,7 @@ func (s *Handler) PostHome(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
+
 	login := session.Get("login").(string)
 	res, err := s.service.ExecQuery(ctx, c.PostForm("query"), login)
 	if err != nil {
@@ -91,16 +95,19 @@ func (s *Handler) LoginPost(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/")
 		return
 	}
+
 	login := c.PostForm("login")
 	err := s.service.Login(c.Request.Context(), login, c.PostForm("password"))
 	if err != nil {
 		HandlerErr(c, err)
 		return
 	}
+
 	session.Set("authenticated", true)
 	session.Set("login", login)
 	session.Options(sessions.Options{MaxAge: 60 * 60})
 	session.Save()
+
 	c.HTML(http.StatusOK, "connections.html", nil)
 }
 
@@ -137,6 +144,7 @@ func (s *Handler) Registration(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/")
 		return
 	}
+
 	c.HTML(http.StatusOK, "registration.html", nil)
 }
 
@@ -146,6 +154,7 @@ func (s *Handler) ConnectionGet(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
+
 	c.HTML(http.StatusOK, "connections.html", nil)
 }
 
@@ -155,7 +164,9 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
+
 	login := session.Get("login").(string)
 	s.service.GetConnection(login, c.PostForm("connectionString"))
+
 	c.HTML(http.StatusOK, "smartTables.html", nil)
 }

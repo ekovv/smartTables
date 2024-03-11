@@ -100,6 +100,24 @@ func (s *Storage) ExecWithRes(ctx context.Context, query string, connectionStrin
 	return result, nil
 }
 
+func (s *Storage) ExecWithoutRes(ctx context.Context, query, connectionString string) error {
+	db, err := sql.Open("postgres", connectionString)
+	if err != nil {
+		return err
+	}
+	stmt, err := db.PrepareContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare query: %v", err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to do query: %w", err)
+	}
+	return nil
+}
+
 func (s *Storage) Registration(ctx context.Context, user string, password []byte) error {
 	_, err := s.conn.ExecContext(ctx, "INSERT INTO users (login, password) VALUES ($1, $2)", user, password)
 	if err != nil {

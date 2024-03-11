@@ -33,12 +33,20 @@ func (s *Service) ExecQuery(ctx context.Context, query string, user string) ([][
 		return nil, fmt.Errorf("no connections")
 	}
 
+	if strings.Contains(query, "INSERT") || strings.Contains(query, "DELETE") || strings.Contains(query, "UPDATE") {
+		err := s.storage.ExecWithoutRes(ctx, query, connectionString)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
 	res, err := s.storage.ExecWithRes(ctx, query, connectionString)
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
 
+	return res, nil
 }
 
 func (s *Service) GetConnection(user, connect string) {
@@ -50,6 +58,7 @@ func (s *Service) Registration(ctx context.Context, user, password string) error
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	err = s.storage.Registration(ctx, user, hashedPassword)
 	if err != nil {
 		if strings.Contains(err.Error(), "unique constraint") {
@@ -58,8 +67,8 @@ func (s *Service) Registration(ctx context.Context, user, password string) error
 			return fmt.Errorf("not saved")
 		}
 	}
-	return nil
 
+	return nil
 }
 
 func (s *Service) Login(ctx context.Context, user, password string) error {
@@ -71,9 +80,11 @@ func (s *Service) Login(ctx context.Context, user, password string) error {
 			return constants.ErrInvalidData
 		}
 	}
+
 	err = bcrypt.CompareHashAndPassword(pass, []byte(password))
 	if err != nil {
 		return constants.ErrInvalidData
 	}
+
 	return nil
 }
