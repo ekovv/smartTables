@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -110,4 +111,16 @@ func (s *Storage) Registration(ctx context.Context, user string, password []byte
 		}
 	}
 	return nil
+}
+
+func (s *Storage) Login(ctx context.Context, user string) ([]byte, error) {
+	var dbPassword []byte
+	err := s.conn.QueryRowContext(ctx, "SELECT password FROM users WHERE login = $1", user).Scan(&dbPassword)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user not registered")
+		}
+		return nil, fmt.Errorf("failed to check: %w", err)
+	}
+	return dbPassword, nil
 }

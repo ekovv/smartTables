@@ -1,7 +1,10 @@
 package handler
 
 import (
+	"crypto/rand"
 	"fmt"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"smartTables/config"
@@ -22,7 +25,14 @@ func NewHandler(service domains.Service, cnf config.Config) *Handler {
 		engine:  router,
 		config:  cnf,
 	}
-
+	key := make([]byte, 32)
+	_, err := rand.Read(key)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	store := cookie.NewStore(key)
+	router.Use(sessions.Sessions("token", store))
 	Route(router, h)
 	return h
 }
@@ -45,6 +55,7 @@ func (s *Handler) PostHome(c *gin.Context) {
 		HandlerErr(c, err)
 		return
 	}
+
 	data := make([][]string, len(res))
 	for i, row := range res {
 		data[i] = make([]string, len(row))
@@ -64,7 +75,20 @@ func (s *Handler) GetResult(c *gin.Context) {
 }
 
 func (s *Handler) LoginPost(c *gin.Context) {
-
+	session := sessions.Default(c)
+	if session.Get("authenticated") == true {
+		c.Redirect(http.StatusMovedPermanently, "/")
+		return
+	}
+	err := s.service.Login(c.Request.Context(), c.PostForm("login"), c.PostForm("password"))
+	if err != nil {
+		HandlerErr(c, err)
+		return
+	}
+	session.Set("authenticated", true)
+	session.Options(sessions.Options{MaxAge: 60 * 60})
+	session.Save()
+	c.HTML(http.StatusOK, "connections.html", nil)
 }
 
 func (s *Handler) Login(c *gin.Context) {
@@ -72,12 +96,21 @@ func (s *Handler) Login(c *gin.Context) {
 }
 
 func (s *Handler) RegistrationPost(c *gin.Context) {
+	session := sessions.Default(c)
+	if session.Get("authenticated") == true {
+		c.Redirect(http.StatusMovedPermanently, "/")
+		return
+	}
+
 	ctx := c.Request.Context()
 	err := s.service.Registration(ctx, c.PostForm("login"), c.PostForm("password"))
 	if err != nil {
 		HandlerErr(c, err)
 		return
 	}
+
+	c.Redirect(http.StatusMovedPermanently, "/login")
+
 }
 
 func (s *Handler) Registration(c *gin.Context) {

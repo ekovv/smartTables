@@ -2,9 +2,108 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            background-color: #FFFFFF; /* White background */
+        }
+        .brand-title {
+            font-family: 'Great Vibes', cursive;
+            text-align: center;
+            font-size: 48px;
+            color: #333;
+            margin-top: 40px; /* Top margin */
+        }
+        .form-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background: #a8e2a8; /* Milky-green color */
+            border-radius: 5px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            width: 300px; /* Fixed width */
+        }
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            margin: 5px 0 22px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            opacity: 0.9;
+        }
+        .btn-primary:hover {
+            opacity:1;
+        }
+        .form-text {
+            color: #6c757d;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            font-size: 0.875em;
+        }
+        .signin-header {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        .database-select {
+            width: 100%;
+            padding: 15px;
+            margin: 5px 0 22px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1.0em; /* Larger font size */
+        }
+    </style>
 </head>
 <body>
+
+<div class="brand-title">Smart Tables</div>
+
+<div class="form-container">
+    <div class="signin-header">Welcome back!</div>
+    <form>
+        <div class="mb-3">
+            <label for="database" class="form-label">Select Database:</label>
+            <select id="database" name="database" class="form-control database-select">
+                <option value="postgresql">PostgreSQL</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="user" class="form-label">User</label>
+            <input type="text" class="form-control" name="user" id="user" aria-describedby="userHelp">
+            <div id="userHelp" class="form-text">Enter your username.</div>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" id="password">
+        </div>
+        <div class="mb-3">
+            <label for="connectionString" class="form-label">Connection String</label>
+            <input type="text" name="connectionString" class="form-control" id="connectionString">
+        </div>
+        <button type="submit" class="btn btn-primary">Connect</button>
+    </form>
+</div>
 
 </body>
 </html>

@@ -7,6 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"smartTables/config"
+	"smartTables/internal/constants"
 	"smartTables/internal/domains"
 	"smartTables/internal/shema"
 	"strings"
@@ -59,4 +60,20 @@ func (s *Service) Registration(ctx context.Context, user, password string) error
 	}
 	return nil
 
+}
+
+func (s *Service) Login(ctx context.Context, user, password string) error {
+	pass, err := s.storage.Login(ctx, user)
+	if err != nil {
+		if strings.Contains(err.Error(), "user not registered") {
+			return constants.ErrInvalidData
+		} else {
+			return fmt.Errorf("not checked")
+		}
+	}
+	err = bcrypt.CompareHashAndPassword(pass, []byte(password))
+	if err != nil {
+		return constants.ErrInvalidData
+	}
+	return nil
 }

@@ -14,7 +14,10 @@ func HandlerErr(c *gin.Context, err error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, constants.ErrAlreadyExists):
-			err := fmt.Sprintf("invalid from person %s", err)
+			err := fmt.Sprintf("already exists %s", err)
+			c.JSON(http.StatusNotFound, err)
+		case errors.Is(err, constants.ErrInvalidData):
+			err := fmt.Sprintf("invalid data %s", err)
 			c.JSON(http.StatusNotFound, err)
 		case errors.As(err, &UnmarshalTypeError):
 			err := fmt.Sprintf("bad json %s", err)
