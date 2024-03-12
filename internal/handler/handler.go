@@ -170,3 +170,21 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "smartTables.html", nil)
 }
+
+func (s *Handler) ShowTables(c *gin.Context) {
+	session := sessions.Default(c)
+	if session.Get("authenticated") != true {
+		c.Redirect(http.StatusMovedPermanently, "/login")
+		return
+	}
+	login := session.Get("login").(string)
+	data, err := s.service.GetTables(c.Request.Context(), login)
+	if err != nil {
+		HandlerErr(c, err)
+		return
+	}
+
+	c.HTML(http.StatusOK, "allTables.html", gin.H{
+		"data": data,
+	})
+}

@@ -12,4 +12,5 @@ func Route(c *gin.Engine, h *Handler) {
 	c.POST("/registration", h.RegistrationPost)
 	c.GET("/login", h.Login)
 	c.POST("/login", h.LoginPost)
+	c.GET("/tables", h.ShowTables)
 }

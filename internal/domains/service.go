@@ -7,4 +7,5 @@ type Service interface {
 	Registration(ctx context.Context, user, password string) error
 	Login(ctx context.Context, user, password string) error
 	GetConnection(user, connect string)
+	GetTables(ctx context.Context, user string) ([]string, error)
 }

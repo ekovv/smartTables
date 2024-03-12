@@ -88,3 +88,15 @@ func (s *Service) Login(ctx context.Context, user, password string) error {
 
 	return nil
 }
+
+func (s *Service) GetTables(ctx context.Context, user string) ([]string, error) {
+	connectionString, ok := s.connections[user]
+	if !ok {
+		return nil, fmt.Errorf("no connections")
+	}
+	res, err := s.storage.GetAllTables(ctx, connectionString)
+	if err != nil {
+		return nil, fmt.Errorf("can't get tables: %w", err)
+	}
+	return res, nil
+}
