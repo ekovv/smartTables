@@ -188,3 +188,10 @@ func (s *Handler) ShowTables(c *gin.Context) {
 		"data": data,
 	})
 }
+
+func (s *Handler) Logout(c *gin.Context) {
+	session := sessions.Default(c)
+	session.Clear()
+	session.Save()
+	c.Redirect(http.StatusMovedPermanently, "/login")
+}
