@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Все таблицы</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center mt-4">Tables:</h1>
+    <div id="tables" class="mt-4">
+        {{range .data}}
+        <p>{{.}}</p>
+        {{end}}
+    </div>
+</div>
+</body>
+</html>
