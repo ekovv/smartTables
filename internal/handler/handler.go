@@ -164,9 +164,9 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
-
+	db := c.PostForm("database")
 	login := session.Get("login").(string)
-	s.service.GetConnection(login, c.PostForm("connectionString"))
+	s.service.GetConnection(login, db, c.PostForm("connectionString"))
 
 	c.HTML(http.StatusOK, "smartTables.html", nil)
 }

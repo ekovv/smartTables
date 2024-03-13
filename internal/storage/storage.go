@@ -55,69 +55,6 @@ func (s *Storage) Close() error {
 	return s.conn.Close()
 }
 
-func (s *Storage) ExecWithRes(ctx context.Context, query string, connectionString string) ([][]interface{}, error) {
-	db, err := sql.Open("postgres", connectionString)
-	if err != nil {
-		return nil, err
-	}
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-	rows, err := stmt.QueryContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	cols, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-
-	colNames := make([]interface{}, len(cols))
-	for i, v := range cols {
-		colNames[i] = v
-	}
-	result := [][]interface{}{colNames}
-
-	for rows.Next() {
-		columns := make([]interface{}, len(cols))
-		columnPointers := make([]interface{}, len(cols))
-		for i := range columns {
-			columnPointers[i] = &columns[i]
-		}
-		if err := rows.Scan(columnPointers...); err != nil {
-			return nil, err
-		}
-		result = append(result, columns)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (s *Storage) ExecWithoutRes(ctx context.Context, query, connectionString string) error {
-	db, err := sql.Open("postgres", connectionString)
-	if err != nil {
-		return err
-	}
-	stmt, err := db.PrepareContext(ctx, query)
-	if err != nil {
-		return fmt.Errorf("failed to prepare query: %v", err)
-	}
-	defer stmt.Close()
-
-	_, err = stmt.ExecContext(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to do query: %w", err)
-	}
-	return nil
-}
-
 func (s *Storage) Registration(ctx context.Context, user string, password []byte) error {
 	_, err := s.conn.ExecContext(ctx, "INSERT INTO users (login, password) VALUES ($1, $2)", user, password)
 	if err != nil {
@@ -140,31 +77,4 @@ func (s *Storage) Login(ctx context.Context, user string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to check: %w", err)
 	}
 	return dbPassword, nil
-}
-
-func (s *Storage) GetAllTables(ctx context.Context, connectionString string) ([]string, error) {
-	db, err := sql.Open("postgres", connectionString)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := db.QueryContext(ctx, "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema'")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var tables []string
-	for rows.Next() {
-		var table string
-		if err := rows.Scan(&table); err != nil {
-			return nil, err
-		}
-		tables = append(tables, table)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return tables, nil
 }
