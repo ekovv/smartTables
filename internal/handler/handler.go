@@ -196,3 +196,29 @@ func (s *Handler) Logout(c *gin.Context) {
 	session.Save()
 	c.Redirect(http.StatusMovedPermanently, "/login")
 }
+
+func (s *Handler) GetFile(c *gin.Context) {
+	session := sessions.Default(c)
+	file, err := c.FormFile("fileUpload")
+	if err != nil {
+		HandlerErr(c, err)
+	}
+	login := session.Get("login").(string)
+	res, err := s.service.QueryFromFile(c.Request.Context(), file, login)
+	if err != nil {
+		HandlerErr(c, err)
+		return
+	}
+
+	data := make([][]string, len(res))
+	for i, row := range res {
+		data[i] = make([]string, len(row))
+		for j, col := range row {
+			data[i][j] = fmt.Sprint(col)
+		}
+	}
+
+	c.HTML(http.StatusOK, "result.html", gin.H{
+		"data": data,
+	})
+}

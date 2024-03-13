@@ -14,4 +14,5 @@ func Route(c *gin.Engine, h *Handler) {
 	c.POST("/login", h.LoginPost)
 	c.GET("/tables", h.ShowTables)
 	c.POST("/logout", h.Logout)
+	c.POST("/upload", h.GetFile)
 }

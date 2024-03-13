@@ -13,6 +13,11 @@
         </div>
         <button type="submit" class="btn btn-primary">Отправить</button>
     </form>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="fileUpload" accept=".txt,.sql">
+        <button type="submit">Загрузить</button>
+    </form>
+
     <form action="/tables" method="GET" class="mb-4">
         <button type="submit" class="btn btn-secondary">Показать все таблицы</button>
     </form>

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+	"io"
 	"log"
+	"mime/multipart"
 	"smartTables/config"
 	"smartTables/internal/constants"
 	"smartTables/internal/domains"
@@ -196,4 +198,42 @@ func GetAllTables(ctx context.Context, connectionString *sql.DB) ([]string, erro
 	}
 
 	return tables, nil
+}
+
+func (s *Service) QueryFromFile(ctx context.Context, file *multipart.FileHeader, user string) ([][]interface{}, error) {
+	if file == nil {
+		return nil, fmt.Errorf("missing file")
+	}
+	var connectionString *sql.DB
+	connection, ok := s.connections[user]
+	for _, conn := range connection {
+		if conn.Flag {
+			connectionString = conn.Conn
+		}
+	}
+	if !ok {
+		return nil, fmt.Errorf("no connections")
+	}
+	f, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	fileBytes, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	if strings.Contains(string(fileBytes), "INSERT") || strings.Contains(string(fileBytes), "DELETE") || strings.Contains(string(fileBytes), "UPDATE") {
+		err := ExecWithoutRes(ctx, string(fileBytes), connectionString)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	res, err := ExecWithRes(ctx, string(fileBytes), connectionString)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
