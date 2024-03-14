@@ -237,3 +237,16 @@ func (s *Service) QueryFromFile(ctx context.Context, file *multipart.FileHeader,
 	}
 	return res, nil
 }
+
+func (s *Service) LogoutConnection(user, db string) error {
+	connection, ok := s.connections[user]
+	if !ok {
+		return fmt.Errorf("no connection")
+	}
+	for _, conn := range connection {
+		if conn.TypeDB == db {
+			conn.Flag = false
+		}
+	}
+	return nil
+}

@@ -166,6 +166,8 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 	}
 
 	db := c.PostForm("database")
+	session.Set("database", db)
+	session.Save()
 	login := session.Get("login").(string)
 	s.service.GetConnection(login, db, c.PostForm("connectionString"))
 
@@ -192,6 +194,13 @@ func (s *Handler) ShowTables(c *gin.Context) {
 
 func (s *Handler) Logout(c *gin.Context) {
 	session := sessions.Default(c)
+	login := session.Get("login").(string)
+	db := session.Get("database").(string)
+	err := s.service.LogoutConnection(login, db)
+	if err != nil {
+		HandlerErr(c, err)
+		return
+	}
 	session.Clear()
 	session.Save()
 	c.Redirect(http.StatusMovedPermanently, "/login")

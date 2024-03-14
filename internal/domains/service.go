@@ -12,4 +12,5 @@ type Service interface {
 	GetConnection(user, typeDB, connect string)
 	GetTables(ctx context.Context, user string) ([]string, error)
 	QueryFromFile(ctx context.Context, file *multipart.FileHeader, user string) ([][]interface{}, error)
+	LogoutConnection(user, db string) error
 }
