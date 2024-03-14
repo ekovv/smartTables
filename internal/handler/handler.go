@@ -32,6 +32,7 @@ func NewHandler(service domains.Service, cnf config.Config) *Handler {
 		fmt.Println(err)
 		return nil
 	}
+
 	store := cookie.NewStore(key)
 	router.Use(sessions.Sessions("token", store))
 
