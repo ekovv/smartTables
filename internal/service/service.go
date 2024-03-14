@@ -32,6 +32,7 @@ func NewService(storage domains.Storage, config config.Config) *Service {
 }
 
 func (s *Service) ExecQuery(ctx context.Context, query string, user string) ([][]interface{}, error) {
+	const op = "service.ExecQuery"
 	var connectionString *sql.DB
 	connection, ok := s.connections[user]
 	for _, conn := range connection {
@@ -40,12 +41,14 @@ func (s *Service) ExecQuery(ctx context.Context, query string, user string) ([][
 		}
 	}
 	if !ok {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, fmt.Errorf("no connection")))
 		return nil, fmt.Errorf("no connections")
 	}
 
 	if strings.Contains(query, "INSERT") || strings.Contains(query, "DELETE") || strings.Contains(query, "UPDATE") {
 		err := ExecWithoutRes(ctx, query, connectionString)
 		if err != nil {
+			s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 			return nil, err
 		}
 		return nil, nil
@@ -53,6 +56,7 @@ func (s *Service) ExecQuery(ctx context.Context, query string, user string) ([][
 
 	res, err := ExecWithRes(ctx, query, connectionString)
 	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 		return nil, err
 	}
 
@@ -61,6 +65,7 @@ func (s *Service) ExecQuery(ctx context.Context, query string, user string) ([][
 func ExecWithRes(ctx context.Context, query string, connectionString *sql.DB) ([][]interface{}, error) {
 	stmt, err := connectionString.Prepare(query)
 	if err != nil {
+
 		return nil, err
 	}
 	defer stmt.Close()
@@ -113,11 +118,13 @@ func ExecWithoutRes(ctx context.Context, query string, connectionString *sql.DB)
 }
 
 func (s *Service) GetConnection(user, typeDB, connect string) {
+	const op = "service.GetConnection"
 	c := shema.Connection{}
 	c.TypeDB = typeDB
 	c.Flag = true
 	db, err := sql.Open("postgres", connect)
 	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 		return
 	}
 	c.Conn = db
@@ -125,6 +132,7 @@ func (s *Service) GetConnection(user, typeDB, connect string) {
 }
 
 func (s *Service) Registration(ctx context.Context, user, password string) error {
+	const op = "service.Registration"
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Fatal(err)
@@ -135,6 +143,7 @@ func (s *Service) Registration(ctx context.Context, user, password string) error
 		if strings.Contains(err.Error(), "unique constraint") {
 			return constants.ErrAlreadyExists
 		} else {
+			s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 			return fmt.Errorf("not saved")
 		}
 	}
@@ -161,6 +170,7 @@ func (s *Service) Login(ctx context.Context, user, password string) error {
 }
 
 func (s *Service) GetTables(ctx context.Context, user string) ([]string, error) {
+	const op = "service.GetTables"
 	var connectionString *sql.DB
 	connection, ok := s.connections[user]
 	for _, conn := range connection {
@@ -173,6 +183,7 @@ func (s *Service) GetTables(ctx context.Context, user string) ([]string, error) 
 	}
 	res, err := GetAllTables(ctx, connectionString)
 	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 		return nil, fmt.Errorf("can't get tables: %w", err)
 	}
 	return res, nil
@@ -201,6 +212,7 @@ func GetAllTables(ctx context.Context, connectionString *sql.DB) ([]string, erro
 }
 
 func (s *Service) QueryFromFile(ctx context.Context, file *multipart.FileHeader, user string) ([][]interface{}, error) {
+	const op = "service.QueryFromFile"
 	if file == nil {
 		return nil, fmt.Errorf("missing file")
 	}
@@ -221,11 +233,13 @@ func (s *Service) QueryFromFile(ctx context.Context, file *multipart.FileHeader,
 
 	fileBytes, err := io.ReadAll(f)
 	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 		return nil, err
 	}
 	if strings.Contains(string(fileBytes), "INSERT") || strings.Contains(string(fileBytes), "DELETE") || strings.Contains(string(fileBytes), "UPDATE") {
 		err := ExecWithoutRes(ctx, string(fileBytes), connectionString)
 		if err != nil {
+			s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 			return nil, err
 		}
 		return nil, nil
@@ -233,6 +247,7 @@ func (s *Service) QueryFromFile(ctx context.Context, file *multipart.FileHeader,
 
 	res, err := ExecWithRes(ctx, string(fileBytes), connectionString)
 	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 		return nil, err
 	}
 	return res, nil
