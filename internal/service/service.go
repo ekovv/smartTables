@@ -14,6 +14,7 @@ import (
 	"smartTables/internal/domains"
 	"smartTables/internal/shema"
 	"strings"
+	"time"
 )
 
 type Service struct {
@@ -117,11 +118,16 @@ func ExecWithoutRes(ctx context.Context, query string, connectionString *sql.DB)
 	return nil
 }
 
-func (s *Service) GetConnection(user, typeDB, connect string) {
+func (s *Service) GetConnection(user, typeDB, connect, dbName string) {
 	const op = "service.GetConnection"
 	c := shema.Connection{}
 	c.TypeDB = typeDB
 	c.Flag = true
+	if dbName == "" {
+		c.DBName = "DatabaseWithoutName"
+	} else {
+		c.DBName = dbName
+	}
 	db, err := sql.Open("postgres", connect)
 	if err != nil {
 		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
@@ -264,4 +270,48 @@ func (s *Service) LogoutConnection(user, db string) error {
 		}
 	}
 	return nil
+}
+
+func (s *Service) SaveQuery(ctx context.Context, query, user string) error {
+	const op = "service.SaveQuery"
+	t := time.Now()
+	t.Format("2006-01-02 15:04:05")
+	typeDB := ""
+	dbName := ""
+	connection, ok := s.connections[user]
+	for _, conn := range connection {
+		if conn.Flag {
+			typeDB = conn.TypeDB
+			dbName = conn.DBName
+		}
+	}
+	if !ok {
+		return fmt.Errorf("no connections")
+	}
+	err := s.storage.SaveQuery(ctx, user, typeDB, dbName, query, t)
+	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
+		return fmt.Errorf("can't save query")
+	}
+	return nil
+}
+
+func (s *Service) GetHistory(ctx context.Context, user string) ([][]string, error) {
+	const op = "service.GetHistory"
+	connection, ok := s.connections[user]
+	if !ok {
+		return nil, fmt.Errorf("no connections")
+	}
+	dbName := ""
+	for _, conn := range connection {
+		if conn.Flag {
+			dbName = conn.DBName
+		}
+	}
+	res, err := s.storage.GetHistory(ctx, user, dbName)
+	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
+		return nil, fmt.Errorf("can't get history: %w", err)
+	}
+	return res, nil
 }

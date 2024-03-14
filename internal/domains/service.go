@@ -9,8 +9,10 @@ type Service interface {
 	ExecQuery(ctx context.Context, query string, user string) ([][]interface{}, error)
 	Registration(ctx context.Context, user, password string) error
 	Login(ctx context.Context, user, password string) error
-	GetConnection(user, typeDB, connect string)
+	GetConnection(user, typeDB, connect, dbName string)
 	GetTables(ctx context.Context, user string) ([]string, error)
 	QueryFromFile(ctx context.Context, file *multipart.FileHeader, user string) ([][]interface{}, error)
 	LogoutConnection(user, db string) error
+	SaveQuery(ctx context.Context, query, user string) error
+	GetHistory(ctx context.Context, user string) ([][]string, error)
 }
