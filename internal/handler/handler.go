@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"smartTables/config"
 	"smartTables/internal/domains"
+	"strings"
 )
 
 type Handler struct {
@@ -77,16 +78,8 @@ func (s *Handler) PostHome(c *gin.Context) {
 		return
 	}
 
-	data := make([][]string, len(res))
-	for i, row := range res {
-		data[i] = make([]string, len(row))
-		for j, col := range row {
-			data[i][j] = fmt.Sprint(col)
-		}
-	}
-
 	c.HTML(http.StatusOK, "result.html", gin.H{
-		"data": data,
+		"data": res,
 	})
 }
 
@@ -172,6 +165,7 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 	}
 	dbName := c.PostForm("dbName")
 	db := c.PostForm("database")
+	strings.ToLower(db)
 	session.Set("database", db)
 	session.Save()
 	login := session.Get("login").(string)
@@ -202,7 +196,7 @@ func (s *Handler) Logout(c *gin.Context) {
 	session := sessions.Default(c)
 	login := session.Get("login").(string)
 	db := session.Get("database").(string)
-	err := s.service.LogoutConnection(login, db)
+	err := s.service.Logout(login, db)
 	if err != nil {
 		HandlerErr(c, err)
 		return
@@ -225,16 +219,8 @@ func (s *Handler) GetFile(c *gin.Context) {
 		return
 	}
 
-	data := make([][]string, len(res))
-	for i, row := range res {
-		data[i] = make([]string, len(row))
-		for j, col := range row {
-			data[i][j] = fmt.Sprint(col)
-		}
-	}
-
 	c.HTML(http.StatusOK, "result.html", gin.H{
-		"data": data,
+		"data": res,
 	})
 }
 
@@ -258,4 +244,19 @@ func (s *Handler) GetHistory(c *gin.Context) {
 	c.HTML(http.StatusOK, "history.html", gin.H{
 		"data": data,
 	})
+}
+
+func (s *Handler) SwitchDatabase(c *gin.Context) {
+	session := sessions.Default(c)
+	login := session.Get("login").(string)
+	db := session.Get("database").(string)
+	err := s.service.Switch(login, db)
+	if err != nil {
+		HandlerErr(c, err)
+		return
+	}
+	session.Delete("database")
+	session.Save()
+	c.Redirect(http.StatusMovedPermanently, "/")
+
 }
