@@ -2,32 +2,89 @@
 <html>
 <head>
     <title>Smart Tables</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #bcd2bc;
+        }
+        /* Custom styles for layout adjustments */
+        .container {
+            padding-top: 20px;
+        }
+        .brand-title {
+            font-family: 'Great Vibes', cursive;
+            text-align: center;
+            font-size: 48px;
+            color: #333;
+            margin-top: 40px; /* Отступ сверху */
+        }
+        .btn-top-right {
+            position: absolute;
+            right: 10px;
+        }
+        .btn-top-right {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .btn-history {
+            margin-right: 75px; /* Измените это значение в зависимости от ширины кнопки Logout */
+        }
+
+
+        .query-input {
+            width: 100%; /* Занимает всю ширину контейнера */
+            max-width: 800px; /* Максимальная ширина поля ввода */
+            margin: 0 auto; /* Выравнивание по центру */
+        }
+
+        .form-control {
+            font-size: 1em; /* Увеличенный размер шрифта */
+
+        }
+
+        .btn-upload {
+            margin-top: 10px;
+        }
+        .query-form {
+            text-align: center;
+        }
+    </style>
 </head>
 <body class="d-flex flex-column justify-content-between min-vh-100">
 <div class="container">
-    <h1 class="text-center mt-4">Smart Tables</h1>
-    <form action="/smartTable" method="POST" class="mb-4">
-        <div class="form-group">
-            <input type="text" class="form-control" name="query" placeholder="Введите строку здесь...">
-        </div>
-        <button type="submit" class="btn btn-primary">Отправить</button>
+    <div class="brand-title">Smart Tables</div>
+
+    <form action="/history" method="GET" class="btn-top-right btn-history">
+        <button type="submit" class="btn btn-info">History</button>
     </form>
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <input type="file" name="fileUpload" accept=".txt,.sql">
-        <button type="submit">Загрузить</button>
+    <form action="/logout" method="POST" class="btn-top-right">
+        <button type="submit" class="btn btn-danger">Logout</button>
     </form>
 
+    <!-- Show Tables button -->
     <form action="/tables" method="GET" class="mb-4">
-        <button type="submit" class="btn btn-secondary">Показать все таблицы</button>
-    </form>
-    <form action="/history" method="GET" class="mb-4">
-        <button type="submit" class="btn btn-info">История</button>
-    </form>
-    <form action="/logout" method="POST">
-        <button type="submit">Logout</button>
+        <button type="submit" class="btn btn-secondary">Show Tables</button>
     </form>
 
+    <!-- Query input box -->
+    <div class="query-form">
+        <form action="/smartTable" method="POST" class="mb-4">
+            <div class="form-group query-input">
+                <textarea class="form-control" name="query" placeholder="Write your SQL query"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Execute</button>
+        </form>
+
+        <!-- File upload button -->
+        <form action="/upload" method="POST" enctype="multipart/form-data" class="btn-upload">
+            <input type="file" name="fileUpload" accept=".txt,.sql">
+            <button type="submit" class="btn btn-success">Upload File</button>
+        </form>
+    </div>
 </div>
 </body>
 </html>
