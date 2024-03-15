@@ -13,3 +13,12 @@ CREATE TABLE users (
 
 ALTER TABLE users
     ADD CONSTRAINT unique_login UNIQUE (login);
+
+CREATE TABLE history (
+        id SERIAL PRIMARY KEY,
+        login VARCHAR(255),
+        typeDB TEXT not null,
+        dbName VARCHAR(255) not null,
+        time TIMESTAMP WITH TIME ZONE,
+        query TEXT
+);

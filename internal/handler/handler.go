@@ -32,6 +32,7 @@ func NewHandler(service domains.Service, cnf config.Config) *Handler {
 		fmt.Println(err)
 		return nil
 	}
+
 	store := cookie.NewStore(key)
 	router.Use(sessions.Sessions("token", store))
 
@@ -63,9 +64,14 @@ func (s *Handler) PostHome(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
-
+	query := c.PostForm("query")
 	login := session.Get("login").(string)
-	res, err := s.service.ExecQuery(ctx, c.PostForm("query"), login)
+	res, err := s.service.ExecQuery(ctx, query, login)
+	if err != nil {
+		HandlerErr(c, err)
+		return
+	}
+	err = s.service.SaveQuery(ctx, query, login)
 	if err != nil {
 		HandlerErr(c, err)
 		return
@@ -164,12 +170,12 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
-
+	dbName := c.PostForm("dbName")
 	db := c.PostForm("database")
 	session.Set("database", db)
 	session.Save()
 	login := session.Get("login").(string)
-	s.service.GetConnection(login, db, c.PostForm("connectionString"))
+	s.service.GetConnection(login, db, c.PostForm("connectionString"), dbName)
 
 	c.HTML(http.StatusOK, "smartTables.html", nil)
 }
@@ -228,6 +234,27 @@ func (s *Handler) GetFile(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "result.html", gin.H{
+		"data": data,
+	})
+}
+
+func (s *Handler) GetHistory(c *gin.Context) {
+	session := sessions.Default(c)
+	login := session.Get("login").(string)
+	res, err := s.service.GetHistory(c.Request.Context(), login)
+	if err != nil {
+		HandlerErr(c, err)
+		return
+	}
+	data := make([][]string, len(res))
+	for i, row := range res {
+		data[i] = make([]string, len(row))
+		for j, col := range row {
+			data[i][j] = fmt.Sprint(col)
+		}
+	}
+
+	c.HTML(http.StatusOK, "history.html", gin.H{
 		"data": data,
 	})
 }

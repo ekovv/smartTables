@@ -11,6 +11,7 @@ import (
 	_ "github.com/lib/pq"
 	"smartTables/config"
 	"strings"
+	"time"
 )
 
 type Storage struct {
@@ -77,4 +78,43 @@ func (s *Storage) Login(ctx context.Context, user string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to check: %w", err)
 	}
 	return dbPassword, nil
+}
+
+func (s *Storage) SaveQuery(ctx context.Context, user, typeDB, dbName, query string, time time.Time) error {
+	sqlStatement := `
+		INSERT INTO history (login, typeDB, dbName, time, query)
+		VALUES ($1, $2, $3, $4, $5)`
+	_, err := s.conn.ExecContext(ctx, sqlStatement, user, typeDB, dbName, time, query)
+	if err != nil {
+		return fmt.Errorf("unable to execute the query. %v", err)
+	}
+	return nil
+}
+
+func (s *Storage) GetHistory(ctx context.Context, user, dbName string) ([][]string, error) {
+	sqlStatement := `
+		SELECT dbname, typedb, query, time
+		FROM history 
+		WHERE login = $1 AND dbName = $2`
+	rows, err := s.conn.QueryContext(ctx, sqlStatement, user, dbName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to execute the query. %v", err)
+	}
+	defer rows.Close()
+
+	var history [][]string
+	for rows.Next() {
+		var dbname, typedb, query, time string
+		err = rows.Scan(&dbname, &typedb, &query, &time)
+		if err != nil {
+			return nil, err
+		}
+		history = append(history, []string{dbname, typedb, query, time})
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return history, nil
 }
