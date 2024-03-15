@@ -246,6 +246,7 @@ func (s *Handler) GetHistory(c *gin.Context) {
 		HandlerErr(c, err)
 		return
 	}
+
 	data := make([][]string, len(res))
 	for i, row := range res {
 		data[i] = make([]string, len(row))
