@@ -81,29 +81,49 @@
 
 <div class="form-container">
     <div class="signin-header">Welcome back!</div>
-    <form action="/" method="POST">
+    <form action="/" method="POST" enctype="multipart/form-data">
         <div class="mb-3">
             <label for="database" class="form-label">Select Database:</label>
-            <select id="database" name="database" class="form-control database-select">
+            <select id="database" name="database" class="form-control database-select" onchange="handleDatabaseChange(this)">
                 <option value="postgresql">PostgreSQL</option>
                 <option value="mysql">MySQL</option>
+                <option value="sqlite">SQLite</option>
             </select>
         </div>
-        <label for="dbName" class="form-label">Database Name</label>
-        <input type="text" name="dbName" class="form-control" id="dbName" aria-describedby="dbNameHelp">
-        <div id="dbNameHelp" class="form-text">Enter your database name</div>
-        <div class="mb-3">
-            <label for="connectionString" class="form-label">Connection String</label>
-            <input type="text" name="connectionString" class="form-control" id="connectionString" aria-describedby="connectionStringHelp">
-            <div id="connectionStringHelp" class="form-text">Enter your connection string to database</div>
+        <div id="otherFields">
+            <label for="dbName" class="form-label">Database Name</label>
+            <input type="text" name="dbName" class="form-control" id="dbName" aria-describedby="dbNameHelp">
+            <div id="dbNameHelp" class="form-text">Enter your database name</div>
+            <div class="mb-3">
+                <label for="connectionString" class="form-label">Connection String</label>
+                <input type="text" name="connectionString" class="form-control" id="connectionString" aria-describedby="connectionStringHelp">
+                <div id="connectionStringHelp" class="form-text">Enter your connection string to database</div>
+            </div>
+        </div>
+        <div id="sqliteFile" style="display: none;">
+            <label for="sqliteDbFile" class="form-label">Upload SQLite Database:</label>
+            <input type="file" id="sqliteDbFile" name="sqliteDbFile">
         </div>
         <button type="submit" class="btn btn-primary">Connect</button>
     </form>
     <form action="/logout" method="POST">
         <button type="submit">Logout</button>
     </form>
-
 </div>
+
+<script>
+    function handleDatabaseChange(select) {
+        var sqliteFile = document.getElementById('sqliteFile');
+        var otherFields = document.getElementById('otherFields');
+        if (select.value === 'sqlite') {
+            sqliteFile.style.display = 'block';
+            otherFields.style.display = 'none';
+        } else {
+            sqliteFile.style.display = 'none';
+            otherFields.style.display = 'block';
+        }
+    }
+</script>
 
 </body>
 </html>
