@@ -166,9 +166,11 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 	dbName := c.PostForm("dbName")
 	db := c.PostForm("database")
 	strings.ToLower(db)
+
 	session.Set("database", db)
 	session.Save()
 	login := session.Get("login").(string)
+
 	s.service.GetConnection(login, db, c.PostForm("connectionString"), dbName)
 
 	c.HTML(http.StatusOK, "smartTables.html", nil)
