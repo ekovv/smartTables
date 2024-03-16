@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/lib/pq v1.10.9
 	go.uber.org/zap v1.27.0

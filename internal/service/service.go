@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"io"
@@ -32,7 +33,7 @@ func NewService(storage domains.Storage, config config.Config) *Service {
 	return &Service{storage: storage, logger: logger, config: config, connections: make(map[string][]shema.Connection)}
 }
 
-func (s *Service) ExecQuery(ctx context.Context, query string, user string) ([][]interface{}, error) {
+func (s *Service) ExecQuery(ctx context.Context, query string, user string) ([][]string, error) {
 	const op = "service.ExecQuery"
 	var connectionString *sql.DB
 	connection, ok := s.connections[user]
@@ -63,14 +64,8 @@ func (s *Service) ExecQuery(ctx context.Context, query string, user string) ([][
 
 	return res, nil
 }
-func ExecWithRes(ctx context.Context, query string, connectionString *sql.DB) ([][]interface{}, error) {
-	stmt, err := connectionString.Prepare(query)
-	if err != nil {
-
-		return nil, err
-	}
-	defer stmt.Close()
-	rows, err := stmt.QueryContext(ctx)
+func ExecWithRes(ctx context.Context, query string, connectionString *sql.DB) ([][]string, error) {
+	rows, err := connectionString.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -81,11 +76,7 @@ func ExecWithRes(ctx context.Context, query string, connectionString *sql.DB) ([
 		return nil, err
 	}
 
-	colNames := make([]interface{}, len(cols))
-	for i, v := range cols {
-		colNames[i] = v
-	}
-	result := [][]interface{}{colNames}
+	result := make([][]string, 0)
 
 	for rows.Next() {
 		columns := make([]interface{}, len(cols))
@@ -96,7 +87,17 @@ func ExecWithRes(ctx context.Context, query string, connectionString *sql.DB) ([
 		if err := rows.Scan(columnPointers...); err != nil {
 			return nil, err
 		}
-		result = append(result, columns)
+
+		strRow := make([]string, len(cols))
+		for i, val := range columns {
+			bytes, ok := val.([]byte)
+			if ok {
+				strRow[i] = string(bytes)
+			} else {
+				strRow[i] = fmt.Sprint(val)
+			}
+		}
+		result = append(result, strRow)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -104,14 +105,9 @@ func ExecWithRes(ctx context.Context, query string, connectionString *sql.DB) ([
 	}
 	return result, nil
 }
-func ExecWithoutRes(ctx context.Context, query string, connectionString *sql.DB) error {
-	stmt, err := connectionString.PrepareContext(ctx, query)
-	if err != nil {
-		return fmt.Errorf("failed to prepare query: %v", err)
-	}
-	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx)
+func ExecWithoutRes(ctx context.Context, query string, connectionString *sql.DB) error {
+	_, err := connectionString.ExecContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("failed to do query: %w", err)
 	}
@@ -128,7 +124,14 @@ func (s *Service) GetConnection(user, typeDB, connect, dbName string) {
 	} else {
 		c.DBName = dbName
 	}
-	db, err := sql.Open("postgres", connect)
+	var driver string
+	switch {
+	case typeDB == "postgresql":
+		driver = "postgres"
+	case typeDB == "mysql":
+		driver = "mysql"
+	}
+	db, err := sql.Open(driver, connect)
 	if err != nil {
 		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 		return
@@ -179,23 +182,34 @@ func (s *Service) GetTables(ctx context.Context, user string) ([]string, error) 
 	const op = "service.GetTables"
 	var connectionString *sql.DB
 	connection, ok := s.connections[user]
+	typeDB := ""
 	for _, conn := range connection {
 		if conn.Flag {
+			typeDB = conn.TypeDB
 			connectionString = conn.Conn
 		}
 	}
 	if !ok {
 		return nil, fmt.Errorf("no connections")
 	}
-	res, err := GetAllTables(ctx, connectionString)
+	res, err := GetAllTables(ctx, connectionString, typeDB)
 	if err != nil {
 		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 		return nil, fmt.Errorf("can't get tables: %w", err)
 	}
 	return res, nil
 }
-func GetAllTables(ctx context.Context, connectionString *sql.DB) ([]string, error) {
-	rows, err := connectionString.QueryContext(ctx, "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema'")
+func GetAllTables(ctx context.Context, connectionString *sql.DB, dbType string) ([]string, error) {
+	var query string
+	if dbType == "postgresql" {
+		query = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema'"
+	} else if dbType == "mysql" {
+		query = "SHOW TABLES"
+	} else {
+		return nil, fmt.Errorf("unsupported database type: %s", dbType)
+	}
+
+	rows, err := connectionString.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +231,7 @@ func GetAllTables(ctx context.Context, connectionString *sql.DB) ([]string, erro
 	return tables, nil
 }
 
-func (s *Service) QueryFromFile(ctx context.Context, file *multipart.FileHeader, user string) ([][]interface{}, error) {
+func (s *Service) QueryFromFile(ctx context.Context, file *multipart.FileHeader, user string) ([][]string, error) {
 	const op = "service.QueryFromFile"
 	if file == nil {
 		return nil, fmt.Errorf("missing file")
@@ -259,16 +273,17 @@ func (s *Service) QueryFromFile(ctx context.Context, file *multipart.FileHeader,
 	return res, nil
 }
 
-func (s *Service) LogoutConnection(user, db string) error {
+func (s *Service) Logout(user, db string) error {
 	connection, ok := s.connections[user]
 	if !ok {
 		return fmt.Errorf("no connection")
 	}
-	for _, conn := range connection {
-		if conn.TypeDB == db {
-			conn.Flag = false
+	for i := range connection {
+		if connection[i].Flag && connection[i].TypeDB == db {
+			connection[i].Flag = false
 		}
 	}
+
 	return nil
 }
 
@@ -314,4 +329,19 @@ func (s *Service) GetHistory(ctx context.Context, user string) ([][]string, erro
 		return nil, fmt.Errorf("can't get history: %w", err)
 	}
 	return res, nil
+}
+
+func (s *Service) Switch(user, typeDB string) error {
+	const op = "service.Switch"
+	connection, ok := s.connections[user]
+	if !ok {
+		return fmt.Errorf("no connections")
+	}
+	for i := range connection {
+		if connection[i].Flag && connection[i].TypeDB == typeDB {
+			connection[i].Flag = false
+		}
+	}
+
+	return nil
 }
