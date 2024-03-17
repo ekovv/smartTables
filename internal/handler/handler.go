@@ -78,6 +78,7 @@ func (s *Handler) PostHome(c *gin.Context) {
 		HandlerErr(c, err)
 		return
 	}
+
 	err = s.service.SaveQuery(ctx, query, login)
 	if err != nil {
 		HandlerErr(c, err)
@@ -199,6 +200,7 @@ func (s *Handler) ShowTables(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
+
 	login := session.Get("login").(string)
 	data, err := s.service.GetTables(c.Request.Context(), login)
 	if err != nil {
