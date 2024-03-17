@@ -339,19 +339,13 @@ func (s *Service) QueryFromFile(ctx context.Context, file *multipart.FileHeader,
 	return res, nil
 }
 
-func (s *Service) Logout(user, db string) error {
+func (s *Service) Logout(user string) error {
 	connection, ok := s.connections[user]
 	if !ok {
 		return nil
 	}
 	for i := range connection {
-		if db == "" {
-			if connection[i].Flag {
-				connection[i].Flag = false
-			}
-			return nil
-		}
-		if connection[i].Flag && connection[i].TypeDB == db {
+		if connection[i].Flag {
 			connection[i].Flag = false
 		}
 	}
