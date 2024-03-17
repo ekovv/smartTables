@@ -68,6 +68,12 @@ func (s *Handler) PostHome(c *gin.Context) {
 	query := c.PostForm("query")
 	login := session.Get("login").(string)
 	res, err := s.service.ExecQuery(ctx, query, login)
+	if res == nil {
+		c.HTML(http.StatusOK, "smartTables.html", gin.H{
+			"message": "Запрос успешно выполнен",
+		})
+		return
+	}
 	if err != nil {
 		HandlerErr(c, err)
 		return
