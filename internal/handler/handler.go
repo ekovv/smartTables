@@ -68,6 +68,12 @@ func (s *Handler) PostHome(c *gin.Context) {
 	query := c.PostForm("query")
 	login := session.Get("login").(string)
 	res, err := s.service.ExecQuery(ctx, query, login)
+	if res == nil {
+		c.HTML(http.StatusOK, "smartTables.html", gin.H{
+			"message": "Запрос успешно выполнен",
+		})
+		return
+	}
 	if err != nil {
 		HandlerErr(c, err)
 		return
@@ -163,12 +169,25 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
+
 	dbName := c.PostForm("dbName")
 	db := c.PostForm("database")
 	strings.ToLower(db)
-	session.Set("database", db)
-	session.Save()
 	login := session.Get("login").(string)
+	if db == "sqlite" {
+		file, err := c.FormFile("sqliteDbFile")
+		if err != nil {
+			HandlerErr(c, err)
+			return
+		}
+
+		s.service.GetConnectionWithFile(login, db, dbName, file)
+		session.Set("database", db)
+		session.Save()
+		c.HTML(http.StatusOK, "smartTables.html", nil)
+		return
+	}
+
 	s.service.GetConnection(login, db, c.PostForm("connectionString"), dbName)
 
 	c.HTML(http.StatusOK, "smartTables.html", nil)
@@ -195,8 +214,7 @@ func (s *Handler) ShowTables(c *gin.Context) {
 func (s *Handler) Logout(c *gin.Context) {
 	session := sessions.Default(c)
 	login := session.Get("login").(string)
-	db := session.Get("database").(string)
-	err := s.service.Logout(login, db)
+	err := s.service.Logout(login)
 	if err != nil {
 		HandlerErr(c, err)
 		return

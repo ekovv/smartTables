@@ -5,11 +5,14 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"log"
 	"mime/multipart"
+	"os"
+	"path/filepath"
 	"smartTables/config"
 	"smartTables/internal/constants"
 	"smartTables/internal/domains"
@@ -140,6 +143,67 @@ func (s *Service) GetConnection(user, typeDB, connect, dbName string) {
 	s.connections[user] = append(s.connections[user], c)
 }
 
+func (s *Service) GetConnectionWithFile(user, typeDB, dbName string, file *multipart.FileHeader) {
+	const op = "service.GetConnection"
+	userDir, err := createUserDir(user)
+	if err != nil {
+		return
+	}
+
+	fileRes, err := file.Open()
+	if err != nil {
+		return
+	}
+	defer fileRes.Close()
+
+	dst, err := saveFile(userDir, file.Filename, fileRes)
+	if err != nil {
+		return
+	}
+	c := shema.Connection{}
+	c.TypeDB = typeDB
+	c.Flag = true
+	if dbName == "" {
+		c.DBName = "DatabaseWithoutName"
+	} else {
+		c.DBName = dbName
+	}
+	db, err := sql.Open("sqlite3", dst)
+	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
+		return
+	}
+	c.Conn = db
+	s.connections[user] = append(s.connections[user], c)
+}
+func createUserDir(username string) (string, error) {
+	userDir := filepath.Join(".", username)
+	if _, err := os.Stat(userDir); os.IsNotExist(err) {
+		err = os.Mkdir(userDir, 0755)
+		if err != nil {
+			return "", err
+		}
+	}
+	return userDir, nil
+}
+
+// Сохранение файла в директории пользователя
+func saveFile(userDir string, filename string, file io.Reader) (string, error) {
+	dst := filepath.Join(userDir, filename)
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return "", err
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, file)
+	if err != nil {
+		return "", err
+	}
+
+	return dst, nil
+}
+
 func (s *Service) Registration(ctx context.Context, user, password string) error {
 	const op = "service.Registration"
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -205,6 +269,8 @@ func GetAllTables(ctx context.Context, connectionString *sql.DB, dbType string) 
 		query = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema'"
 	} else if dbType == "mysql" {
 		query = "SHOW TABLES"
+	} else if dbType == "sqlite" {
+		query = "SELECT name FROM sqlite_master WHERE type='table'"
 	} else {
 		return nil, fmt.Errorf("unsupported database type: %s", dbType)
 	}
@@ -273,13 +339,13 @@ func (s *Service) QueryFromFile(ctx context.Context, file *multipart.FileHeader,
 	return res, nil
 }
 
-func (s *Service) Logout(user, db string) error {
+func (s *Service) Logout(user string) error {
 	connection, ok := s.connections[user]
 	if !ok {
-		return fmt.Errorf("no connection")
+		return nil
 	}
 	for i := range connection {
-		if connection[i].Flag && connection[i].TypeDB == db {
+		if connection[i].Flag {
 			connection[i].Flag = false
 		}
 	}

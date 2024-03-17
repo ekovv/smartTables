@@ -89,6 +89,25 @@
             <button type="submit" class="btn btn-success">Upload File</button>
         </form>
     </div>
+    <div id="messageBox" class="alert" style="display: none;"></div>
+
 </div>
+
+<script>
+    window.onload = function() {
+        var messageBox = document.getElementById('messageBox');
+        var message = "{{.message}}";
+        if (message) {
+            messageBox.style.display = 'block';
+            messageBox.textContent = message;
+
+            // Скрыть сообщение через 10 секунд
+            setTimeout(function() {
+                messageBox.style.display = 'none';
+            }, 10000); // 10000 миллисекунд равно 10 секундам
+        }
+    }
+</script>
+
 </body>
 </html>

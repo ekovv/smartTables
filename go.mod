@@ -8,6 +8,7 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/lib/pq v1.10.9
+	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.17.0
 )
