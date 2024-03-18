@@ -1,5 +1,0 @@
-{
-  "host": "localhost:8080",
-  "dsn": "postgres://dmitrydenisov:ekov16@localhost:5432/smartTables?sslmode=disable",
-  "salt": "ssssaaallt"
-}
