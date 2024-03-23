@@ -109,6 +109,30 @@
     <form action="/logout" method="POST">
         <button type="submit">Logout</button>
     </form>
+    <button id="openModal">Open Modal</button>
+</div>
+<div id="modal" style="display: none;">
+    <form action="/grpc" method="POST">
+        <label for="login">Login:</label>
+        <input type="text" id="login" name="login">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password">
+        <label for="dbName">Database Name:</label>
+        <input type="text" id="databaseName" name="databaseName">
+        <input type="submit" value="Submit">
+        <div class="mb-3">
+            <label for="database" class="form-label">Select Database:</label>
+            <select id="databaseForGRPC" name="databaseForGRPC" class="form-control database-select" onchange="handleDatabaseChange(this)">
+                <option value="postgresql">PostgreSQL</option>
+                <option value="mysql">MySQL</option>
+                <option value="sqlite">SQLite</option>
+            </select>
+        </div>
+    </form>
+</div>
+<div id="connectionStringDisplay">
+    <p id="connectionStringText"></p>
+    <button onclick="copyConnectionString()">Copy Connection String</button>
 </div>
 
 <script>
@@ -121,6 +145,29 @@
         } else {
             sqliteFile.style.display = 'none';
             otherFields.style.display = 'block';
+        }
+    }
+    document.getElementById('openModal').addEventListener('click', function() {
+        document.getElementById('modal').style.display = 'block';
+    });
+
+    function copyConnectionString() {
+        var text = document.getElementById('connectionStringText').innerText;
+        var textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        alert('Connection string copied to clipboard');
+    }
+
+    // Показать строку подключения при загрузке страницы
+    window.onload = function() {
+        var connectionString = "{{.data}}"; // Замените на вашу строку подключения
+        if (connectionString) {
+            document.getElementById('connectionStringText').innerText = connectionString;
+            document.getElementById('connectionStringDisplay').style.display = 'block';
         }
     }
 </script>
