@@ -24,6 +24,7 @@ func HandlerErr(c *gin.Context, err error) {
 			c.JSON(http.StatusBadRequest, err)
 		}
 		return
+
 	}
 	c.Status(http.StatusOK)
 	return
