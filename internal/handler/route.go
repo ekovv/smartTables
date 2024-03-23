@@ -17,4 +17,5 @@ func Route(c *gin.Engine, h *Handler) {
 	c.POST("/upload", h.GetFile)
 	c.GET("/history", h.GetHistory)
 	c.POST("/switch", h.SwitchDatabase)
+	c.POST("/grpc", h.CreateDatabase)
 }

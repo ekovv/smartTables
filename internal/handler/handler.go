@@ -3,9 +3,13 @@ package handler
 import (
 	"crypto/rand"
 	"fmt"
+	createv1 "github.com/ekovv/protosDB/gen/go/creator"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"log"
 	"net/http"
 	"smartTables/config"
 	"smartTables/internal/domains"
@@ -78,6 +82,7 @@ func (s *Handler) PostHome(c *gin.Context) {
 		HandlerErr(c, err)
 		return
 	}
+
 	err = s.service.SaveQuery(ctx, query, login)
 	if err != nil {
 		HandlerErr(c, err)
@@ -187,7 +192,8 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 		c.HTML(http.StatusOK, "smartTables.html", nil)
 		return
 	}
-
+	session.Set("database", db)
+	session.Save()
 	s.service.GetConnection(login, db, c.PostForm("connectionString"), dbName)
 
 	c.HTML(http.StatusOK, "smartTables.html", nil)
@@ -199,6 +205,7 @@ func (s *Handler) ShowTables(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
+
 	login := session.Get("login").(string)
 	data, err := s.service.GetTables(c.Request.Context(), login)
 	if err != nil {
@@ -276,5 +283,39 @@ func (s *Handler) SwitchDatabase(c *gin.Context) {
 	session.Delete("database")
 	session.Save()
 	c.Redirect(http.StatusMovedPermanently, "/")
+
+}
+
+func (s *Handler) CreateDatabase(c *gin.Context) {
+	session := sessions.Default(c)
+	user := session.Get("login").(string)
+	login := c.PostForm("login")
+	password := c.PostForm("password")
+	dbName := c.PostForm("databaseName")
+	dbType := c.PostForm("databaseForGRPC")
+
+	conn, err := grpc.DialContext(c.Request.Context(), s.config.HostGRPC, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Не удалось подключиться: %v", err)
+	}
+	defer conn.Close()
+
+	// Создайте новый клиент gRPC.
+	client := createv1.NewCreatorClient(conn)
+
+	// Вызовите метод CreateDB.
+	response, err := client.CreateDB(c.Request.Context(), &createv1.CreateDBRequest{
+		User:     user,
+		Login:    login,
+		Password: password,
+		DbName:   dbName,
+		DbType:   dbType,
+	})
+	if err != nil {
+		log.Fatalf("Ошибка при вызове CreateDB: %v", err)
+	}
+	c.HTML(http.StatusOK, "connections.html", gin.H{
+		"data": response.GetConnectionString(),
+	})
 
 }
