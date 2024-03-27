@@ -164,8 +164,16 @@ func (s *Handler) ConnectionGet(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
+	login := session.Get("login").(string)
+	m, err := s.service.GetLastDB(c.Request.Context(), login)
+	if err != nil {
+		HandlerErr(c, err)
+		return
+	}
 
-	c.HTML(http.StatusOK, "connections.html", nil)
+	c.HTML(http.StatusOK, "connections.html", gin.H{
+		"buttons": m,
+	})
 }
 
 func (s *Handler) ConnectionPost(c *gin.Context) {
@@ -194,7 +202,7 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 	}
 	session.Set("database", db)
 	session.Save()
-	s.service.GetConnection(login, db, c.PostForm("connectionString"), dbName)
+	s.service.GetConnection(c.Request.Context(), login, db, c.PostForm("connectionString"), dbName)
 
 	c.HTML(http.StatusOK, "smartTables.html", nil)
 }

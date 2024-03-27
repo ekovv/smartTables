@@ -80,6 +80,9 @@
 <div class="brand-title">Smart Tables</div>
 
 <div class="form-container">
+    {{range $key, $value := .buttons}}
+    <button data-info="{{$value}}">{{$key}}</button>
+    {{end}}
     <div class="signin-header">Welcome back!</div>
     <form action="/" method="POST" enctype="multipart/form-data">
         <div class="mb-3">

@@ -80,6 +80,43 @@ func (s *Storage) Login(ctx context.Context, user string) ([]byte, error) {
 	return dbPassword, nil
 }
 
+func (s *Storage) SaveConnection(ctx context.Context, user, connectionString string) error {
+	sqlStatement := `
+		UPDATE users SET connectionString = $1 WHERE login = $2`
+	_, err := s.conn.ExecContext(ctx, sqlStatement, connectionString, user)
+	if err != nil {
+		return fmt.Errorf("unable to execute the query. %v", err)
+	}
+	return nil
+}
+
+func (s *Storage) GetLastDB(ctx context.Context, user string) (map[string]string, error) {
+	result := make(map[string]string)
+
+	query := `
+        SELECT u.connectionString, h.dbName
+        FROM users u
+        JOIN history h ON u.login = h.login
+        WHERE u.login = $1 AND h.time > NOW() - INTERVAL '10 days'
+    `
+
+	rows, err := s.conn.QueryContext(ctx, query, user)
+	if err != nil {
+		return nil, fmt.Errorf("unable to execute the query. %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var connectionString, dbName string
+		if err := rows.Scan(&connectionString, &dbName); err != nil {
+			return nil, fmt.Errorf("unable to scan the row. %v", err)
+		}
+		result[dbName] = connectionString
+	}
+
+	return result, nil
+}
+
 func (s *Storage) SaveQuery(ctx context.Context, user, typeDB, dbName, query string, time time.Time) error {
 	sqlStatement := `
 		INSERT INTO history (login, typeDB, dbName, time, query)
