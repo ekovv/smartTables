@@ -9,7 +9,7 @@ type Service interface {
 	ExecQuery(ctx context.Context, query string, user string) ([][]string, error)
 	Registration(ctx context.Context, user, password string) error
 	Login(ctx context.Context, user, password string) error
-	GetConnection(user, typeDB, connect, dbName string)
+	GetConnection(ctx context.Context, user, typeDB, connect, dbName string)
 	GetConnectionWithFile(user, typeDB, dbName string, file *multipart.FileHeader)
 	GetTables(ctx context.Context, user string) ([]string, error)
 	QueryFromFile(ctx context.Context, file *multipart.FileHeader, user string) ([][]string, error)
@@ -17,4 +17,5 @@ type Service interface {
 	SaveQuery(ctx context.Context, query, user string) error
 	GetHistory(ctx context.Context, user string) ([][]string, error)
 	Switch(user, typeDB string) error
+	GetLastDB(ctx context.Context, user string) (map[string]string, error)
 }

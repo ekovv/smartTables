@@ -117,7 +117,7 @@ func ExecWithoutRes(ctx context.Context, query string, connectionString *sql.DB)
 	return nil
 }
 
-func (s *Service) GetConnection(user, typeDB, connect, dbName string) {
+func (s *Service) GetConnection(ctx context.Context, user, typeDB, connect, dbName string) {
 	const op = "service.GetConnection"
 	c := shema.Connection{}
 	c.TypeDB = typeDB
@@ -133,6 +133,11 @@ func (s *Service) GetConnection(user, typeDB, connect, dbName string) {
 		driver = "postgres"
 	case typeDB == "mysql":
 		driver = "mysql"
+	}
+	err := s.storage.SaveConnection(ctx, user, connect)
+	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
+		return
 	}
 	db, err := sql.Open(driver, connect)
 	if err != nil {
@@ -410,4 +415,14 @@ func (s *Service) Switch(user, typeDB string) error {
 	}
 
 	return nil
+}
+
+func (s *Service) GetLastDB(ctx context.Context, user string) (map[string]string, error) {
+	const op = "service.GetLastDB"
+	m, err := s.storage.GetLastDB(ctx, user)
+	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
+		return nil, fmt.Errorf("can't get last db: %w", err)
+	}
+	return m, nil
 }
