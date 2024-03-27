@@ -165,6 +165,7 @@ func (s *Handler) ConnectionGet(c *gin.Context) {
 		return
 	}
 	login := session.Get("login").(string)
+
 	m, err := s.service.GetLastDB(c.Request.Context(), login)
 	if err != nil {
 		HandlerErr(c, err)
