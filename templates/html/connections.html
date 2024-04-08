@@ -80,11 +80,12 @@
 <div class="brand-title">Smart Tables</div>
 
 <div class="form-container">
-    {{range $key, $value := .buttons}}
-    <button data-info="{{$value}}">{{$key}}</button>
-    {{end}}
     <div class="signin-header">Welcome back!</div>
     <form action="/" method="POST" enctype="multipart/form-data">
+        {{range $key, $value := .buttons}}
+        <button type="submit" name="button" value="{{$key}}">{{$key}}</button>
+        <input type="hidden" name="{{$key}}" value="{{$value}}">
+        {{end}}
         <div class="mb-3">
             <label for="database" class="form-label">Select Database:</label>
             <select id="database" name="database" class="form-control database-select" onchange="handleDatabaseChange(this)">

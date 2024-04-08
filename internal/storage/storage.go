@@ -97,7 +97,7 @@ func (s *Storage) GetLastDB(ctx context.Context, user string) (map[string]string
         SELECT u.connectionString, h.dbName
         FROM users u
         JOIN history h ON u.login = h.login
-        WHERE u.login = $1 AND h.time > NOW() - INTERVAL '10 days'
+        WHERE u.login = $1 AND h.time > NOW() - INTERVAL '30 days'
     `
 
 	rows, err := s.conn.QueryContext(ctx, query, user)

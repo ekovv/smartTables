@@ -64,13 +64,16 @@ func (s *Handler) GetHome(c *gin.Context) {
 
 func (s *Handler) PostHome(c *gin.Context) {
 	ctx := c.Request.Context()
+
 	session := sessions.Default(c)
 	if session.Get("authenticated") != true {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
+
 	query := c.PostForm("query")
 	login := session.Get("login").(string)
+
 	res, err := s.service.ExecQuery(ctx, query, login)
 	if res == nil {
 		c.HTML(http.StatusOK, "smartTables.html", gin.H{
@@ -118,7 +121,7 @@ func (s *Handler) LoginPost(c *gin.Context) {
 	session.Options(sessions.Options{MaxAge: 60 * 60})
 	session.Save()
 
-	c.HTML(http.StatusOK, "connections.html", nil)
+	c.Redirect(http.StatusMovedPermanently, "/")
 }
 
 func (s *Handler) Login(c *gin.Context) {
@@ -187,6 +190,13 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 	dbName := c.PostForm("dbName")
 	db := c.PostForm("database")
 	strings.ToLower(db)
+	connectionString := c.PostForm("connectionString")
+	button := c.PostForm("button")
+	value := c.PostForm(button)
+	if button != "" {
+		dbName = button
+		connectionString = value
+	}
 	login := session.Get("login").(string)
 	if db == "sqlite" {
 		file, err := c.FormFile("sqliteDbFile")
@@ -203,9 +213,9 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 	}
 	session.Set("database", db)
 	session.Save()
-	s.service.GetConnection(c.Request.Context(), login, db, c.PostForm("connectionString"), dbName)
+	s.service.GetConnection(c.Request.Context(), login, db, connectionString, dbName)
 
-	c.HTML(http.StatusOK, "smartTables.html", nil)
+	c.Redirect(http.StatusMovedPermanently, "/smartTable")
 }
 
 func (s *Handler) ShowTables(c *gin.Context) {
