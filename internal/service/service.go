@@ -134,7 +134,7 @@ func (s *Service) GetConnection(ctx context.Context, user, typeDB, connect, dbNa
 	case typeDB == "mysql":
 		driver = "mysql"
 	}
-	err := s.storage.SaveConnection(ctx, user, connect)
+	err := s.storage.SaveConnection(ctx, user, typeDB, c.DBName, connect)
 	if err != nil {
 		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
 		return
@@ -207,6 +207,35 @@ func saveFile(userDir string, filename string, file io.Reader) (string, error) {
 	}
 
 	return dst, nil
+}
+
+func (s *Service) GetConnectionFromBtn(ctx context.Context, user, connect, dbName string) (string, error) {
+	const op = "service.GetConnectionFromBtn"
+
+	c := shema.Connection{}
+	c.Flag = true
+	typeDB, err := s.storage.GetTypeDB(ctx, user, dbName, connect)
+	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
+		return "", err
+	}
+	var driver string
+	switch {
+	case typeDB == "postgresql":
+		driver = "postgres"
+	case typeDB == "mysql":
+		driver = "mysql"
+	}
+	db, err := sql.Open(driver, connect)
+	if err != nil {
+		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
+		return "", err
+	}
+	c.Conn = db
+	c.DBName = dbName
+	c.TypeDB = typeDB
+	s.connections[user] = append(s.connections[user], c)
+	return typeDB, nil
 }
 
 func (s *Service) Registration(ctx context.Context, user, password string) error {

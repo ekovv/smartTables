@@ -64,13 +64,16 @@ func (s *Handler) GetHome(c *gin.Context) {
 
 func (s *Handler) PostHome(c *gin.Context) {
 	ctx := c.Request.Context()
+
 	session := sessions.Default(c)
 	if session.Get("authenticated") != true {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
+
 	query := c.PostForm("query")
 	login := session.Get("login").(string)
+
 	res, err := s.service.ExecQuery(ctx, query, login)
 	if res == nil {
 		c.HTML(http.StatusOK, "smartTables.html", gin.H{
@@ -118,7 +121,7 @@ func (s *Handler) LoginPost(c *gin.Context) {
 	session.Options(sessions.Options{MaxAge: 60 * 60})
 	session.Save()
 
-	c.HTML(http.StatusOK, "connections.html", nil)
+	c.Redirect(http.StatusMovedPermanently, "/")
 }
 
 func (s *Handler) Login(c *gin.Context) {
@@ -165,6 +168,7 @@ func (s *Handler) ConnectionGet(c *gin.Context) {
 		return
 	}
 	login := session.Get("login").(string)
+
 	m, err := s.service.GetLastDB(c.Request.Context(), login)
 	if err != nil {
 		HandlerErr(c, err)
@@ -182,11 +186,26 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
-
+	login := session.Get("login").(string)
 	dbName := c.PostForm("dbName")
 	db := c.PostForm("database")
 	strings.ToLower(db)
-	login := session.Get("login").(string)
+	connectionString := c.PostForm("connectionString")
+	button := c.PostForm("button")
+	value := c.PostForm(button)
+	if button != "" {
+		dbName = button
+		connectionString = value
+		typeDB, err := s.service.GetConnectionFromBtn(c.Request.Context(), login, connectionString, dbName)
+		if err != nil {
+			HandlerErr(c, err)
+			return
+		}
+		session.Set("database", typeDB)
+		session.Save()
+		c.Redirect(http.StatusMovedPermanently, "/smartTable")
+		return
+	}
 	if db == "sqlite" {
 		file, err := c.FormFile("sqliteDbFile")
 		if err != nil {
@@ -197,14 +216,14 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 		s.service.GetConnectionWithFile(login, db, dbName, file)
 		session.Set("database", db)
 		session.Save()
-		c.HTML(http.StatusOK, "smartTables.html", nil)
+		c.Redirect(http.StatusMovedPermanently, "/smartTable")
 		return
 	}
 	session.Set("database", db)
 	session.Save()
-	s.service.GetConnection(c.Request.Context(), login, db, c.PostForm("connectionString"), dbName)
+	s.service.GetConnection(c.Request.Context(), login, db, connectionString, dbName)
 
-	c.HTML(http.StatusOK, "smartTables.html", nil)
+	c.Redirect(http.StatusMovedPermanently, "/smartTable")
 }
 
 func (s *Handler) ShowTables(c *gin.Context) {

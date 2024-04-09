@@ -10,6 +10,7 @@ type Storage interface {
 	Login(ctx context.Context, user string) ([]byte, error)
 	SaveQuery(ctx context.Context, user, typeDB, dbName, query string, time time.Time) error
 	GetHistory(ctx context.Context, user, dbName string) ([][]string, error)
-	SaveConnection(ctx context.Context, user, connectionString string) error
 	GetLastDB(ctx context.Context, user string) (map[string]string, error)
+	SaveConnection(ctx context.Context, user, typeDB, dbname, connectionString string) error
+	GetTypeDB(ctx context.Context, user, dbName, connStr string) (string, error)
 }
