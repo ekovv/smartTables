@@ -8,8 +8,7 @@ CREATE TABLE test (
 CREATE TABLE users (
                        id SERIAL PRIMARY KEY,
                        login VARCHAR(255) NOT NULL,
-                       password VARCHAR(255) NOT NULL,
-                       connectionString text
+                       password VARCHAR(255) NOT NULL
 );
 
 ALTER TABLE users
@@ -22,4 +21,12 @@ CREATE TABLE history (
         dbName VARCHAR(255) not null,
         time TIMESTAMP WITH TIME ZONE,
         query TEXT
+);
+
+CREATE TABLE connections (
+                         id SERIAL PRIMARY KEY,
+                         login VARCHAR(255),
+                         typeDB TEXT not null,
+                         dbName VARCHAR(255) not null,
+                         connectionString text
 );

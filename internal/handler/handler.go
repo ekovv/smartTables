@@ -186,7 +186,7 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/login")
 		return
 	}
-
+	login := session.Get("login").(string)
 	dbName := c.PostForm("dbName")
 	db := c.PostForm("database")
 	strings.ToLower(db)
@@ -196,8 +196,16 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 	if button != "" {
 		dbName = button
 		connectionString = value
+		typeDB, err := s.service.GetConnectionFromBtn(c.Request.Context(), login, connectionString, dbName)
+		if err != nil {
+			HandlerErr(c, err)
+			return
+		}
+		session.Set("database", typeDB)
+		session.Save()
+		c.Redirect(http.StatusMovedPermanently, "/smartTable")
+		return
 	}
-	login := session.Get("login").(string)
 	if db == "sqlite" {
 		file, err := c.FormFile("sqliteDbFile")
 		if err != nil {
@@ -208,7 +216,7 @@ func (s *Handler) ConnectionPost(c *gin.Context) {
 		s.service.GetConnectionWithFile(login, db, dbName, file)
 		session.Set("database", db)
 		session.Save()
-		c.HTML(http.StatusOK, "smartTables.html", nil)
+		c.Redirect(http.StatusMovedPermanently, "/smartTable")
 		return
 	}
 	session.Set("database", db)

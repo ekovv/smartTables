@@ -80,10 +80,9 @@ func (s *Storage) Login(ctx context.Context, user string) ([]byte, error) {
 	return dbPassword, nil
 }
 
-func (s *Storage) SaveConnection(ctx context.Context, user, connectionString string) error {
-	sqlStatement := `
-		UPDATE users SET connectionString = $1 WHERE login = $2`
-	_, err := s.conn.ExecContext(ctx, sqlStatement, connectionString, user)
+func (s *Storage) SaveConnection(ctx context.Context, user, typeDB, dbname, connectionString string) error {
+	sqlStatement := `INSERT INTO connections (login, typeDB, dbName, connectionString) VALUES ($1, $2, $3, $4)`
+	_, err := s.conn.ExecContext(ctx, sqlStatement, user, typeDB, dbname, connectionString)
 	if err != nil {
 		return fmt.Errorf("unable to execute the query. %v", err)
 	}
@@ -93,12 +92,10 @@ func (s *Storage) SaveConnection(ctx context.Context, user, connectionString str
 func (s *Storage) GetLastDB(ctx context.Context, user string) (map[string]string, error) {
 	result := make(map[string]string)
 
-	query := `
-        SELECT u.connectionString, h.dbName
-        FROM users u
-        JOIN history h ON u.login = h.login
-        WHERE u.login = $1 AND h.time > NOW() - INTERVAL '30 days'
-    `
+	query := `SELECT c.connectionString, c.dbName
+			  FROM connections c
+			  JOIN history h ON c.dbName = h.dbName AND c.login = h.login
+			  WHERE c.login = $1 AND h.time > NOW() - INTERVAL '30 days'`
 
 	rows, err := s.conn.QueryContext(ctx, query, user)
 	if err != nil {
@@ -115,6 +112,19 @@ func (s *Storage) GetLastDB(ctx context.Context, user string) (map[string]string
 	}
 
 	return result, nil
+}
+
+func (s *Storage) GetTypeDB(ctx context.Context, user, dbName, connStr string) (string, error) {
+	var typeDB string
+
+	query := `SELECT typeDB FROM connections WHERE login = $1 AND dbName = $2 AND connectionString = $3`
+
+	err := s.conn.QueryRowContext(ctx, query, user, dbName, connStr).Scan(&typeDB)
+	if err != nil {
+		return "", fmt.Errorf("unable to execute the query. %v", err)
+	}
+
+	return typeDB, nil
 }
 
 func (s *Storage) SaveQuery(ctx context.Context, user, typeDB, dbName, query string, time time.Time) error {
