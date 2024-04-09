@@ -226,6 +226,7 @@ func (s *Service) GetConnectionFromBtn(ctx context.Context, user, connect, dbNam
 	case typeDB == "mysql":
 		driver = "mysql"
 	}
+
 	db, err := sql.Open(driver, connect)
 	if err != nil {
 		s.logger.Info(fmt.Sprintf("%s : %v", op, err))
